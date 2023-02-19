@@ -1,7 +1,6 @@
 package com.example.balancemanager.TableLayoutHandlers;
 
 import static com.example.balancemanager.utils.StringUtils.addPostfix;
-import static com.example.balancemanager.utils.StringUtils.addPrefix;
 import static com.example.balancemanager.utils.StringUtils.formatPrice;
 import static com.example.balancemanager.utils.StringUtils.getLimitString;
 
@@ -10,66 +9,33 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TableLayout;
 import android.widget.TextView;
 
-import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 
 import com.example.balancemanager.Activities.CategoryActivity;
 import com.example.balancemanager.R;
-import com.example.balancemanager.enums.SortDirection;
 import com.example.balancemanager.models.Category;
-import com.example.balancemanager.utils.DesignUtils;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class CategoriesTableHandler extends SortableTableLayoutHandler<Category> {
+    private static final Map<String, Comparator<Category>> COMPARATOR_MAP = Map.of(
+            "Category", (cat1, cat2) -> cat1.getName().compareToIgnoreCase(cat2.getName()),
+            "Funds", (cat1, cat2) -> Float.compare(cat1.getFunds(), cat2.getFunds()),
+            "Percentage", (cat1, cat2) -> Float.compare(cat1.getSplit(), cat2.getSplit()),
+            "Locked", (cat1, cat2) -> cat1.isLocked() && !cat2.isLocked() ? 1 : cat1.isLocked() && cat2.isLocked() ? 0 : -1,
+            "Limit", (cat1, cat2) -> Float.compare(cat1.getLimit(), cat2.getLimit())
+    );
 
     public CategoriesTableHandler(Activity activity, TableLayout tableLayout, List<Category> items, List<String> titles) {
-        super(activity, tableLayout, items, titles);
-
-        sortParameter = "Category";
-    }
-
-    @Override
-    protected List<Category> sort(List<Category> items) {
-        Map<String, Comparator<Category>> comparatorMap = Map.of(
-                "Category", (cat1, cat2) -> cat1.getName().compareToIgnoreCase(cat2.getName()),
-                "Funds", (cat1, cat2) -> Float.compare(cat1.getFunds(), cat2.getFunds()),
-                "Percentage", (cat1, cat2) -> Float.compare(cat1.getSplit(), cat2.getSplit()),
-                "Locked", (cat1, cat2) -> cat1.isLocked() && !cat2.isLocked() ? 1 : cat1.isLocked() && cat2.isLocked() ? 0 : -1,
-                "Limit", (cat1, cat2) -> Float.compare(cat1.getLimit(), cat2.getLimit())
-        );
-
-        Comparator<Category> comparator = comparatorMap.get(sortParameter);
-
-        if (Objects.isNull(comparator)) {
-            return items;
-        }
-
-        return items.stream()
-                .sorted((i1, i2) -> {
-                    assert comparator != null;
-                    if (SORT_DIRECTIONS[sortIndex] == SortDirection.NONE) {
-                        return 0;
-                    }
-
-                    if (SORT_DIRECTIONS[sortIndex] == SortDirection.ASC) {
-                        return comparator.compare(i1, i2);
-                    }
-
-                    return comparator.reversed().compare(i1, i2);
-                })
-                .collect(Collectors.toList());
+        super(activity, tableLayout, items, titles, COMPARATOR_MAP, "Category");
     }
 
     @Override

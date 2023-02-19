@@ -1,6 +1,5 @@
 package com.example.balancemanager.TableLayoutHandlers;
 
-import static com.example.balancemanager.utils.StringUtils.addPrefix;
 import static com.example.balancemanager.utils.StringUtils.formatPrice;
 
 import android.app.Activity;
@@ -15,16 +14,23 @@ import android.widget.TextView;
 import androidx.annotation.RequiresApi;
 
 import com.example.balancemanager.R;
+import com.example.balancemanager.enums.SortDirection;
 import com.example.balancemanager.models.Category;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class CategoryTotalTableHandler extends FilterableTableLayoutHandler<Map.Entry<String, Double>> {
+public class CategoryTotalTableHandler extends SortableFilteredTableLayoutHandler<Map.Entry<String, Double>> {
+    private static final Map<String, Comparator<Map.Entry<String, Double>>> COMPARATOR_MAP = Map.of(
+            "Category", (cat1, cat2) -> cat1.getKey().compareToIgnoreCase(cat2.getKey()),
+            "Total", Comparator.comparingDouble(Map.Entry::getValue)
+    );
 
     public CategoryTotalTableHandler(Activity activity, TableLayout tableLayout, List<Map.Entry<String, Double>> items, List<String> titles) {
-        super(activity, tableLayout, items, titles);
+        super(activity, tableLayout, items, titles, COMPARATOR_MAP, "Category");
 
         filter = Category.NO_CATEGORY;
     }

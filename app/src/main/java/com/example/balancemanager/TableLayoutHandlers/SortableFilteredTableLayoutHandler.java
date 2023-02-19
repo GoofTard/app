@@ -6,13 +6,20 @@ import android.widget.TableLayout;
 
 import androidx.annotation.RequiresApi;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 public abstract class SortableFilteredTableLayoutHandler<T> extends SortableTableLayoutHandler<T> {
     protected String filter;
 
-    protected SortableFilteredTableLayoutHandler(Activity activity, TableLayout tableLayout, List<T> items, List<String> titles) {
-        super(activity, tableLayout, items, titles);
+    protected SortableFilteredTableLayoutHandler(Activity activity,
+                                                 TableLayout tableLayout,
+                                                 List<T> items,
+                                                 List<String> titles,
+                                                 Map<String, Comparator<T>> comparatorMap,
+                                                 String defaultSortParameter) {
+        super(activity, tableLayout, items, titles, comparatorMap, defaultSortParameter);
     }
 
     protected abstract List<T> getFilteredItems();
