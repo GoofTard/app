@@ -39,6 +39,8 @@ public abstract class TableLayoutHandler<T> {
         makeTitles();
     }
 
+    protected abstract View generate(T item);
+
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void refill() {
         refill(items);
@@ -59,12 +61,6 @@ public abstract class TableLayoutHandler<T> {
         refill();
     }
 
-    protected TextView getTitle(String title) {
-        return DesignUtils.generateTitle(activity, title);
-    }
-
-    protected abstract View generate(T item);
-
     @RequiresApi(api = Build.VERSION_CODES.N)
     protected final void refill(List<T> items) {
         views.forEach(tableLayout::removeView);
@@ -78,6 +74,10 @@ public abstract class TableLayoutHandler<T> {
                     views.add(view);
                     tableLayout.addView(view, index.getAndIncrement());
                 }));
+    }
+
+    protected TextView getTitle(String title) {
+        return DesignUtils.generateTitle(activity, title);
     }
 
     private void makeTitles() {

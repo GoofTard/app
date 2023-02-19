@@ -27,6 +27,8 @@ public abstract class SortableTableLayoutHandler<T> extends TableLayoutHandler<T
         sortParameter = "";
     }
 
+    protected abstract List<T> sort(List<T> items);
+
     @Override
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void refill() {
@@ -34,17 +36,6 @@ public abstract class SortableTableLayoutHandler<T> extends TableLayoutHandler<T
 
         super.refill(items);
     }
-
-    protected final void setSortParameter(String sortParameter) {
-        this.sortParameter = sortParameter;
-        sortIndex = 2;
-    }
-
-    protected final void nextSortDirection() {
-        sortIndex = (sortIndex + 1) % SORT_DIRECTIONS.length;
-    }
-
-    protected abstract List<T> sort(List<T> items);
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
@@ -71,4 +62,13 @@ public abstract class SortableTableLayoutHandler<T> extends TableLayoutHandler<T
 
         return tv;
     }
+    protected final void setSortParameter(String sortParameter) {
+        this.sortParameter = sortParameter;
+        sortIndex = 2;
+    }
+
+    protected final void nextSortDirection() {
+        sortIndex = (sortIndex + 1) % SORT_DIRECTIONS.length;
+    }
+
 }

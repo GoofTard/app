@@ -15,6 +15,8 @@ public abstract class FilterableTableLayoutHandler<T> extends TableLayoutHandler
         super(activity, tableLayout, items, titles);
     }
 
+    protected abstract List<T> getFilteredItems();
+
     @Override
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void refill() {
@@ -29,6 +31,4 @@ public abstract class FilterableTableLayoutHandler<T> extends TableLayoutHandler
 
         refill();
     }
-
-    protected abstract List<T> getFilteredItems();
 }
