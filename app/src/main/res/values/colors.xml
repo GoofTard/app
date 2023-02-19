@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="warning">#A31A1A</color>
+    <color name="success">#64C113</color>
+    <color name="neutral">#6B2F9F</color>
+    <color name="disabled">#6F6F6F</color>
+
+    <color name="primary">#FF6200EE</color>
+    <color name="primaryVariant">#FF3700B3</color>
+    <color name="colorOnPrimary">#FF000000</color>
+    <color name="secondary">#FF03DAC5</color>
+    <color name="secondaryVariant">#FF018786</color>
+</resources>
