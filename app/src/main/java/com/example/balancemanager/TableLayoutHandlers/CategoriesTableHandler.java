@@ -1,5 +1,6 @@
 package com.example.balancemanager.TableLayoutHandlers;
 
+import static android.content.Context.MODE_PRIVATE;
 import static com.example.balancemanager.utils.StringUtils.addPostfix;
 import static com.example.balancemanager.utils.StringUtils.formatPrice;
 import static com.example.balancemanager.utils.StringUtils.getLimitString;
@@ -35,7 +36,13 @@ public class CategoriesTableHandler extends SortableTableLayoutHandler<Category>
     );
 
     public CategoriesTableHandler(Activity activity, TableLayout tableLayout, List<Category> items, List<String> titles) {
-        super(activity, tableLayout, items, titles, COMPARATOR_MAP, "Category");
+        super(activity,
+                tableLayout,
+                items,
+                titles,
+                COMPARATOR_MAP,
+                activity.getSharedPreferences("SORT", MODE_PRIVATE).getString("sortBy", "Category"),
+                activity.getSharedPreferences("SORT", MODE_PRIVATE).getInt("sortIndex", 1));
     }
 
     @Override

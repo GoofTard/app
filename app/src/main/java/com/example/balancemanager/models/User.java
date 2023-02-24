@@ -11,7 +11,7 @@ import com.example.balancemanager.settings.Settings;
 import com.example.balancemanager.settings.UserSettings;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -130,18 +130,16 @@ public class User implements Serializable {
             }
         }
 
-        return new Transaction(new Date(), TransactionType.ADD, category, funds, message);
+        return new Transaction(Calendar.getInstance().getTime(), TransactionType.ADD, category, funds, message);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     public Transaction useFunds(float funds, String category, String message) {
         this.total -= funds;
 
-        this.categories
-                .get(category)
-                .useFunds(funds);
+        this.categories.get(category).useFunds(funds);
 
-        return new Transaction(new Date(), TransactionType.USE, category, funds, message);
+        return new Transaction(Calendar.getInstance().getTime(), TransactionType.USE, category, funds, message);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -159,9 +157,10 @@ public class User implements Serializable {
     public void updateCategory(String oldName, Category category) {
         this.categories.remove(oldName);
         this.addCategory(category);
-        this.transactions.stream()
-                .filter(tr -> tr.getCategoryName().equals(oldName))
-                .forEach(transaction -> transaction.setCategoryName(category.getName()));
+        this.transactions.stream().filter(tr -> tr.getCategoryName().equals(oldName)).forEach(transaction -> transaction.setCategoryName(category.getName()));
+        this.favoriteActions.entrySet().stream()
+                .filter(entry -> entry.getValue().getCategoryName().equals(oldName))
+                .forEach(action -> action.getValue().setCategoryName(category.getName()));
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -249,9 +248,7 @@ public class User implements Serializable {
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     private double totalPercentage() {
-        return this.categories.values().stream()
-                .mapToDouble(Category::getSplit)
-                .sum();
+        return this.categories.values().stream().mapToDouble(Category::getSplit).sum();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)

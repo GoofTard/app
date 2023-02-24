@@ -6,33 +6,32 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.balancemanager.R;
+import com.example.balancemanager.forms.AutoCompleteField;
+import com.example.balancemanager.forms.FormValidator;
+import com.example.balancemanager.forms.InputField;
 import com.example.balancemanager.models.Category;
 import com.example.balancemanager.models.GlobalAppData;
-import com.google.android.material.textfield.TextInputEditText;
-import com.google.android.material.textfield.TextInputLayout;
+import com.example.balancemanager.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.Stream;
 
-public class AddFundsActivity extends AppCompatActivity {
-
-    private TextInputEditText tietFunds;
-    private TextInputEditText tietMessage;
-    private TextInputLayout tilFunds;
-    private AutoCompleteTextView actvCategory;
+public class AddFundsActivity extends FormActivity {
     private Button btnAdd;
+    private InputField ifFunds;
+    private InputField ifMessage;
+    private AutoCompleteField acCategory;
 
-    boolean transfer = false;
-    String fromCat;
+    private boolean transfer = false;
+    private String fromCat;
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
@@ -47,68 +46,70 @@ public class AddFundsActivity extends AppCompatActivity {
             fromCat = extras.getString("fromCategory");
         }
 
-        tietFunds = findViewById(R.id.tietFunds);
-        tilFunds = findViewById(R.id.tilFunds);
-        tietMessage = findViewById(R.id.tietMessage);
-        actvCategory = findViewById(R.id.actvCategory);
-        btnAdd = findViewById(R.id.btnAdd);
-
         ArrayList<String> items = new ArrayList<>(Arrays.asList("-"));
 
         GlobalAppData.instance(this).getCategories().stream()
                 .map(Category::getName)
                 .forEach(items::add);
 
+
+        ifFunds = new InputField(findViewById(R.id.tilFunds), findViewById(R.id.tietFunds))
+                .addValidators(
+                        FormValidator.REQUIRED,
+                        new FormValidator("Funds Must Be Positive!", text -> Float.parseFloat(text) > 0)
+                );
+
+        addValidationField(ifFunds);
+
+        ifMessage = new InputField(findViewById(R.id.tilMessage), findViewById(R.id.tietMessage));
+
+        acCategory = new AutoCompleteField(findViewById(R.id.tilCategory),
+                findViewById(R.id.actvCategory),
+                new ArrayAdapter<>(this, R.layout.category_dropdown_item_layout, items));
+
+        btnAdd = findViewById(R.id.btnAdd);
+
         if (transfer) {
-            items.remove("-");
-            items.remove(fromCat);
-            TextInputLayout tilCategory = findViewById(R.id.tilCategory);
-            TextInputLayout tilMessage = findViewById(R.id.tilMessage);
-            tilMessage.setVisibility(View.GONE);
-            tilCategory.setHint("Transfer To");
+            ifMessage.setVisibility(View.GONE);
+
+            acCategory.removeItem("-");
+            acCategory.removeItem(fromCat);
+
+            acCategory.setHint("Transfer To");
+
             btnAdd.setText("Transfer Funds");
+
             TextView tvTitle = findViewById(R.id.tvTitle);
             tvTitle.setText("Transfer Funds From " + fromCat);
+
+            Category from = GlobalAppData.instance(this).getCategoryByName(this, fromCat);
+            new InputField(findViewById(R.id.tilCurrentFunds), findViewById(R.id.tietCurrentFunds))
+                    .setVisibility(View.VISIBLE)
+                    .setText(StringUtils.formatPrice(from.getFunds()));
         }
 
-        actvCategory.setText(items.get(0));
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.category_dropdown_item_layout, items);
-        actvCategory.setAdapter(adapter);
-
-        btnAdd.setOnClickListener(view -> {
-            String funds = tietFunds.getText().toString();
-            String category = actvCategory.getText().toString();
-            String message = tietMessage.getText().toString();
-
-            boolean valid = isInputValid(funds);
-
-            if (valid) {
-                if (transfer) {
-                    GlobalAppData.instance(this).transfer(this, fromCat, category, Float.parseFloat(funds));
-                } else {
-                    GlobalAppData.instance(this).addFunds(this, Float.parseFloat(funds), category.equals("-") ? "" : category, message);
-                }
-
-                setResult(Activity.RESULT_OK, new Intent());
-                finish();
-            }
-        });
+        acCategory.setText(items.get(0));
+        btnAdd.setOnClickListener(this::onSubmit);
     }
 
-    private boolean isInputValid(String funds) {
-        tilFunds.setErrorEnabled(true);
-        if (!funds.isEmpty()) {
-            if (Float.parseFloat(funds) > 0) {
-                tilFunds.setErrorEnabled(false);
-                return true;
-            } else {
-                tilFunds.setError("Funds Must Be Positive!");
-            }
-        } else {
-            tilFunds.setError("Funds Must Be Entered");
-        }
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    @Override
+    protected void onSubmit(View view) {
+        boolean valid = isInputValid();
 
-        return false;
+        if (valid) {
+            String funds = ifFunds.getText();
+            String category = acCategory.getText();
+            String message = ifMessage.getText();
+
+            if (transfer) {
+                GlobalAppData.instance(this).transfer(this, fromCat, category, Float.parseFloat(funds));
+            } else {
+                GlobalAppData.instance(this).addFunds(this, Float.parseFloat(funds), category.equals("-") ? "" : category, message);
+            }
+
+            setResult(Activity.RESULT_OK, new Intent());
+            finish();
+        }
     }
 }

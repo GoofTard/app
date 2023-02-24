@@ -8,39 +8,35 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.Editable;
+import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.ui.AppBarConfiguration;
 
 import com.example.balancemanager.R;
 import com.example.balancemanager.databinding.ActivityCategoryBinding;
-import com.example.balancemanager.databinding.ActivityMainBinding;
+import com.example.balancemanager.forms.FormValidator;
+import com.example.balancemanager.forms.InputField;
 import com.example.balancemanager.models.Category;
 import com.example.balancemanager.models.GlobalAppData;
 import com.google.android.material.navigation.NavigationView;
-import com.google.android.material.textfield.TextInputEditText;
-import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.Objects;
 import java.util.Optional;
 
-public class CategoryActivity extends AppCompatActivity {
+public class CategoryActivity extends FormActivity {
 
     private Category category;
 
-    private TextInputLayout tilCategory;
-    private TextInputEditText tietCategory;
-    private TextInputLayout tilSplit;
-    private TextInputEditText tietSplit;
-    private TextInputLayout tilLimit;
-    private TextInputEditText tietLimit;
+    private InputField ifCategory;
+    private InputField ifSplit;
+    private InputField ifLimit;
+
     private CheckBox cbLimited;
     private CheckBox cbLocked;
     private Button btnAdd;
@@ -61,12 +57,26 @@ public class CategoryActivity extends AppCompatActivity {
 
         initDrawer();
 
-        tilCategory = findViewById(R.id.tilCategory);
-        tietCategory = findViewById(R.id.tietCategory);
-        tilSplit = findViewById(R.id.tilSplit);
-        tietSplit = findViewById(R.id.tietSplit);
-        tilLimit = findViewById(R.id.tilLimit);
-        tietLimit = findViewById(R.id.tietLimit);
+        ifCategory = new InputField(findViewById(R.id.tilCategory), findViewById(R.id.tietCategory))
+                .addValidators(
+                        FormValidator.REQUIRED
+                );
+
+        ifSplit = new InputField(findViewById(R.id.tilSplit), findViewById(R.id.tietSplit))
+                .addValidators(
+                        FormValidator.REQUIRED,
+                        new FormValidator("Split Must Be Positive!", text -> Float.parseFloat(text) > 0)
+                );
+
+        ifLimit = new InputField(findViewById(R.id.tilLimit), findViewById(R.id.tietLimit))
+                .addValidators(
+                        new FormValidator("Limit Cannot Be Empty!", text -> (cbLimited.isChecked() && !text.isEmpty()) || !cbLimited.isChecked()),
+                        new FormValidator("Limit Must Be Positive!", text -> (cbLimited.isChecked() && Float.parseFloat(text) > 0) || !cbLimited.isChecked())
+                )
+                .setText("1");
+
+        addValidationFields(ifCategory, ifSplit, ifLimit);
+
         cbLimited = findViewById(R.id.cbLimited);
         cbLocked = findViewById(R.id.cbLocked);
         btnAdd = findViewById(R.id.btnAdd);
@@ -79,73 +89,16 @@ public class CategoryActivity extends AppCompatActivity {
         } else {
             btnUse.setVisibility(GONE);
             btnUse.setClickable(false);
-            tietLimit.setVisibility(GONE);
-            tilLimit.setVisibility(GONE);
+            ifLimit.setVisibility(GONE);
             btnTransfer.setVisibility(GONE);
             btnTransfer.setClickable(false);
         }
 
         cbLimited.setOnCheckedChangeListener((compoundButton, isChecked) -> {
-            tietLimit.setVisibility(getVisibility(isChecked));
-            tilLimit.setVisibility(getVisibility(isChecked));
+            ifLimit.setVisibility(getVisibility(isChecked));
         });
 
-        btnAdd.setOnClickListener(view -> {
-            if (isValid()) {
-                if (isEdit()) {
-                    update();
-                } else {
-                    add();
-                }
-
-                setResult(Activity.RESULT_OK, new Intent());
-                finish();
-            }
-        });
-    }
-
-    private boolean isValid() {
-        tilCategory.setErrorEnabled(true);
-        tilLimit.setErrorEnabled(true);
-        tilSplit.setErrorEnabled(true);
-
-        Editable cat = tietCategory.getText();
-        Editable split = tietSplit.getText();
-        Editable limit = tietLimit.getText();
-        boolean limited = cbLimited.isChecked();
-
-        if (!Objects.isNull(cat) && cat.length() != 0) {
-            tilCategory.setErrorEnabled(false);
-            if (!Objects.isNull(split) && split.length() != 0) {
-                tilSplit.setErrorEnabled(false);
-                if (Float.parseFloat(split.toString()) > 0) {
-                    tilSplit.setErrorEnabled(false);
-                    if (limited) {
-                        if (!Objects.isNull(limit) && limit.length() != 0) {
-                            if (Float.parseFloat(limit.toString()) > 0) {
-                                tilLimit.setErrorEnabled(false);
-
-                                return true;
-                            } else {
-                                tilLimit.setError("Limit must be positive!");
-                            }
-                        } else {
-                            tilLimit.setError("Limit cannot be empty!");
-                        }
-                    } else {
-                        return true;
-                    }
-                } else {
-                    tilSplit.setError("Split must be positive!");
-                }
-            } else {
-                tilSplit.setError("Split cannot be empty!");
-            }
-        } else {
-            tilCategory.setError("Category cannot be empty!");
-        }
-
-        return false;
+        btnAdd.setOnClickListener(this::onSubmit);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -164,31 +117,28 @@ public class CategoryActivity extends AppCompatActivity {
 
     private Category getData() {
         return new Category(
-                this.tietCategory.getText().toString(),
-                Float.parseFloat(this.tietSplit.getText().toString()),
-                this.cbLimited.isChecked() ? Float.parseFloat(this.tietLimit.getText().toString()) : -1,
-                this.cbLocked.isChecked(),
-                Objects.isNull(this.category) ? 0 : this.category.getFunds());
+                ifCategory.getText(),
+                Float.parseFloat(ifSplit.getText()),
+                cbLimited.isChecked() ? Float.parseFloat(ifLimit.getText()) : -1,
+                cbLocked.isChecked(),
+                Objects.isNull(category) ? 0 : category.getFunds());
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void initValues() {
         tvTitle.setText("Edit Category");
 
-        tietCategory.setText(category.getName());
-        tietSplit.setText(String.valueOf(category.getSplit()));
+        ifCategory.setText(category.getName());
+        ifSplit.setText(String.valueOf(category.getSplit()));
         cbLocked.setChecked(category.isLocked());
 
         boolean limited = category.getLimit() != -1;
 
         if (limited) {
-            tietLimit.setText(String.valueOf(category.getLimit()));
-        } else {
-            tietLimit.setText("1");
+            ifLimit.setText(String.valueOf(category.getLimit()));
         }
 
-        tietLimit.setVisibility(getVisibility(limited));
-        tilLimit.setVisibility(getVisibility(limited));
+        ifLimit.setVisibility(getVisibility(limited));
 
         cbLimited.setChecked(limited);
 
@@ -267,4 +217,17 @@ public class CategoryActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onSubmit(View view) {
+        if (isInputValid()) {
+            if (isEdit()) {
+                update();
+            } else {
+                add();
+            }
+
+            setResult(Activity.RESULT_OK, new Intent());
+            finish();
+        }
+    }
 }

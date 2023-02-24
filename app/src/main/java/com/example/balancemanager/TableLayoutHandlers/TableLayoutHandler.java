@@ -39,6 +39,18 @@ public abstract class TableLayoutHandler<T> {
         makeTitles();
     }
 
+    protected TableLayoutHandler(Activity activity, TableLayout tableLayout, List<T> items, List<String> titles, boolean initTitles) {
+        this.items = items;
+        this.tableLayout = tableLayout;
+        this.activity = activity;
+        this.titles = titles;
+
+        this.views = new LinkedList<>();
+        titlesMap = new HashMap<>();
+
+        if (initTitles) makeTitles();
+    }
+
     protected abstract View generate(T item);
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -80,7 +92,7 @@ public abstract class TableLayoutHandler<T> {
         return DesignUtils.generateTitle(activity, title);
     }
 
-    private void makeTitles() {
+    protected void makeTitles() {
         TableRow titlesRow = new TableRow(activity);
         titlesRow.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,

@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
                 tlCategories,
                 new LinkedList<>(),
                 Arrays.asList("Category", "Funds", "Percentage", "Locked", "Limit"));
+        categoriesTableHandler.setSaveChange(true);
 
         initButtonListeners();
 

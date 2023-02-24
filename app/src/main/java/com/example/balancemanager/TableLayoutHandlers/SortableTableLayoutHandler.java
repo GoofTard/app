@@ -5,6 +5,7 @@ import static com.example.balancemanager.enums.SortDirection.DESC;
 import static com.example.balancemanager.enums.SortDirection.NONE;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Build;
 import android.widget.TableLayout;
 import android.widget.TextView;
@@ -25,6 +26,7 @@ public abstract class SortableTableLayoutHandler<T> extends TableLayoutHandler<T
     protected int sortIndex;
     protected String sortParameter;
     private final Map<String, Comparator<T>> comparatorMap;
+    private boolean saveChange;
 
     protected SortableTableLayoutHandler(Activity activity,
                                          TableLayout tableLayout,
@@ -32,12 +34,33 @@ public abstract class SortableTableLayoutHandler<T> extends TableLayoutHandler<T
                                          List<String> titles,
                                          Map<String, Comparator<T>> comparatorMap,
                                          String defaultSortParameter) {
-        super(activity, tableLayout, items, titles);
+        super(activity, tableLayout, items, titles, false);
 
         this.sortParameter = defaultSortParameter;
         this.comparatorMap = comparatorMap;
 
         sortIndex = 1;
+        saveChange = false;
+
+        super.makeTitles();
+    }
+
+    protected SortableTableLayoutHandler(Activity activity,
+                                         TableLayout tableLayout,
+                                         List<T> items,
+                                         List<String> titles,
+                                         Map<String, Comparator<T>> comparatorMap,
+                                         String defaultSortParameter,
+                                         int sortIndex) {
+        super(activity, tableLayout, items, titles, false);
+
+        this.sortParameter = defaultSortParameter;
+        this.comparatorMap = comparatorMap;
+
+        this.sortIndex = sortIndex;
+        saveChange = false;
+
+        super.makeTitles();
     }
 
     protected final List<T> sort(List<T> items) {
@@ -90,9 +113,22 @@ public abstract class SortableTableLayoutHandler<T> extends TableLayoutHandler<T
                 });
             }
 
+            if (saveChange) {
+                activity.getSharedPreferences("SORT", Context.MODE_PRIVATE).edit()
+                        .putString("sortBy", sortParameter)
+                        .commit();
+                activity.getSharedPreferences("SORT", Context.MODE_PRIVATE).edit()
+                        .putInt("sortIndex", sortIndex)
+                        .commit();
+            }
+
             tv.setCompoundDrawablesRelativeWithIntrinsicBounds(DesignUtils.getSortIcon(SORT_DIRECTIONS[sortIndex]), 0, 0, 0);
             refill();
         });
+
+        if (sortParameter.equals(tv.getText().toString())) {
+            tv.setCompoundDrawablesRelativeWithIntrinsicBounds(DesignUtils.getSortIcon(SORT_DIRECTIONS[sortIndex]), 0, 0, 0);
+        }
 
         return tv;
     }
@@ -106,4 +142,7 @@ public abstract class SortableTableLayoutHandler<T> extends TableLayoutHandler<T
         sortIndex = (sortIndex + 1) % SORT_DIRECTIONS.length;
     }
 
+    public void setSaveChange(boolean saveChange) {
+        this.saveChange = saveChange;
+    }
 }

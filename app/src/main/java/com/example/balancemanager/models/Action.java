@@ -32,6 +32,7 @@ public class Action implements Serializable {
     public void setName(String name) {
         this.name = name;
     }
+
     public String getCategoryName() {
         return categoryName;
     }
@@ -50,6 +51,10 @@ public class Action implements Serializable {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
     }
 
     @Override

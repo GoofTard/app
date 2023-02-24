@@ -2,45 +2,39 @@ package com.example.balancemanager.Activities;
 
 import android.os.Build;
 import android.os.Bundle;
-import android.text.Editable;
+import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.balancemanager.R;
 import com.example.balancemanager.enums.TransactionType;
+import com.example.balancemanager.forms.AutoCompleteField;
+import com.example.balancemanager.forms.FormValidator;
+import com.example.balancemanager.forms.InputField;
 import com.example.balancemanager.models.Action;
 import com.example.balancemanager.models.Category;
 import com.example.balancemanager.models.GlobalAppData;
-import com.example.balancemanager.utils.StringUtils;
-import com.google.android.material.textfield.TextInputEditText;
-import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class AddActionActivity extends AppCompatActivity {
+public class AddActionActivity extends FormActivity {
     private TextView tvTitle;
-    private TextInputLayout tilName;
-    private TextInputEditText tietName;
-    private TextInputLayout tilFunds;
-    private TextInputEditText tietFunds;
-    private TextInputEditText tietMessage;
-    private TextInputLayout tilCategory;
-    private AutoCompleteTextView actvCategory;
+    private InputField ifName;
+    private InputField ifFunds;
+    private InputField ifMessage;
+    private AutoCompleteField ifCategory;
     private RadioButton rbAdd;
     private RadioButton rbUse;
     private Button btnAdd;
     private Action action;
     private final List<String> categories = new LinkedList<>();
-    private ArrayAdapter<String> adapter;
 
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -50,13 +44,33 @@ public class AddActionActivity extends AppCompatActivity {
         setContentView(R.layout.activity_add_action);
 
         tvTitle = findViewById(R.id.tvTitle);
-        tilName = findViewById(R.id.tilName);
-        tietName = findViewById(R.id.tietName);
-        tilFunds = findViewById(R.id.tilFunds);
-        tietFunds = findViewById(R.id.tietFunds);
-        tietMessage = findViewById(R.id.tietMessage);
-        tilCategory = findViewById(R.id.tilCategory);
-        actvCategory = findViewById(R.id.actvCategory);
+
+        ifName = new InputField(findViewById(R.id.tilName), findViewById(R.id.tietName))
+                .addValidators(
+                        FormValidator.REQUIRED,
+                        new FormValidator("Name Must Be Unique!", text -> !nameExists(text.trim()))
+                );
+
+        ifFunds = new InputField(findViewById(R.id.tilFunds), findViewById(R.id.tietFunds))
+                .addValidators(
+                        FormValidator.REQUIRED,
+                        new FormValidator("Funds Must Be Positive!", text -> Float.parseFloat(text) > 0)
+                );
+
+        ifMessage = new InputField(findViewById(R.id.tilMessage), findViewById(R.id.tietMessage));
+
+        categories.addAll(GlobalAppData.instance(this).getCategories().stream()
+                .map(Category::getName)
+                .collect(Collectors.toList()));
+
+        ifCategory = (AutoCompleteField) new AutoCompleteField(
+                findViewById(R.id.tilCategory),
+                findViewById(R.id.actvCategory),
+                new ArrayAdapter<>(this, R.layout.category_dropdown_item_layout, categories))
+                .addValidators(FormValidator.REQUIRED);
+
+        addValidationFields(ifName, ifFunds, ifCategory);
+
         rbAdd = findViewById(R.id.rbAdd);
         rbUse = findViewById(R.id.rbUse);
         btnAdd = findViewById(R.id.btnAdd);
@@ -65,101 +79,30 @@ public class AddActionActivity extends AppCompatActivity {
         rbUse.setOnCheckedChangeListener((compoundButton, b) -> setActive(TransactionType.USE));
         rbAdd.setOnCheckedChangeListener((compoundButton, b) -> setActive(TransactionType.ADD));
 
-        categories.addAll(GlobalAppData.instance(this).getCategories().stream()
-                .map(Category::getName)
-                .collect(Collectors.toList()));
-
-        adapter = new ArrayAdapter<>(this, R.layout.category_dropdown_item_layout, categories);
-        actvCategory.setAdapter(adapter);
-
         setActive(TransactionType.ADD);
 
         Bundle extras = getIntent().getExtras();
 
         if (!Objects.isNull(extras)) {
-            action = (Action)extras.get("action");
+            action = (Action) extras.get("action");
         }
 
         if (isEdit()) {
             initEdit();
         }
 
-        btnAdd.setOnClickListener(v -> {
-           if (isValid()) {
-               Action action = new Action(
-                       getSelected(),
-                       tietName.getText().toString().trim(),
-                       actvCategory.getText().toString(),
-                       Float.parseFloat(tietFunds.getText().toString()),
-                       isMessageEntered() ? tietMessage.getText().toString() : ""
-               );
-
-               if (isEdit()) {
-                    GlobalAppData.instance(this).updateAction(this, this.action.getName(), action);
-               } else {
-                GlobalAppData.instance(this).addAction(this, action);
-               }
-
-               setResult(RESULT_OK);
-               finish();
-           }
-        });
-    }
-
-    private boolean isMessageEntered() {
-        return !Objects.isNull(tietMessage.getText()) && !tietMessage.getText().toString().isEmpty();
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.N)
-    private boolean isValid() {
-        Editable name = tietName.getText();
-        Editable funds = tietFunds.getText();
-        Editable category = actvCategory.getText();
-
-        tilName.setErrorEnabled(true);
-        tilFunds.setErrorEnabled(true);
-        tilCategory.setErrorEnabled(true);
-
-        if (!Objects.isNull(name) && !name.toString().isEmpty()) {
-            if (!nameExists(name.toString().trim())) {
-                tilName.setErrorEnabled(false);
-
-                if (!Objects.isNull(funds) && !funds.toString().isEmpty()) {
-                    if (Float.parseFloat(funds.toString()) > 0) {
-                        tilFunds.setErrorEnabled(false);
-
-                        if (!Objects.isNull(category) && !category.toString().isEmpty()) {
-                            tilCategory.setErrorEnabled(false);
-
-                            return true;
-                        } else {
-                            tilCategory.setError("Category Must Be Entered!");
-                        }
-                    } else {
-                        tilFunds.setError("Funds Must Be Positive!");
-                    }
-                } else {
-                    tilFunds.setError("Funds Must Be Entered!");
-                }
-            } else {
-                tilName.setError("Name Must Be Unique!");
-            }
-        } else {
-            tilName.setError("Name Must Be Entered");
-        }
-
-        return false;
+        btnAdd.setOnClickListener(this::onSubmit);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void initEdit() {
         btnAdd.setText("Update");
         tvTitle.setText("Update Action");
-        tietName.setText(action.getName());
-        tietFunds.setText(String.valueOf(action.getFunds()));
-        tietMessage.setText(action.getMessage());
+        ifName.setText(action.getName());
+        ifFunds.setText(String.valueOf(action.getFunds()));
+        ifMessage.setText(action.getMessage());
         setActive(action.getType());
-        actvCategory.setText(action.getCategoryName(), false);
+        ifCategory.setText(action.getCategoryName());
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -197,7 +140,7 @@ public class AddActionActivity extends AppCompatActivity {
             }
         }
 
-        actvCategory.setText(categories.get(0), false);
+        ifCategory.setText(categories.get(0));
     }
 
     private TransactionType getSelected() {
@@ -206,5 +149,27 @@ public class AddActionActivity extends AppCompatActivity {
 
     private boolean isEdit() {
         return !Objects.isNull(action);
+    }
+
+    @Override
+    protected void onSubmit(View view) {
+        if (isInputValid()) {
+            Action action = new Action(
+                    getSelected(),
+                    ifName.getText().trim(),
+                    ifCategory.getText(),
+                    Float.parseFloat(ifFunds.getText()),
+                    ifMessage.getText()
+            );
+
+            if (isEdit()) {
+                GlobalAppData.instance(this).updateAction(this, this.action.getName(), action);
+            } else {
+                GlobalAppData.instance(this).addAction(this, action);
+            }
+
+            setResult(RESULT_OK);
+            finish();
+        }
     }
 }

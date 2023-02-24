@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Build;
+import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TableLayout;
@@ -42,7 +43,7 @@ public class TransactionsTableHandler extends FilterableTableLayoutHandler<Trans
 
         Date date = item.getDate();
 
-        String dateString = String.format("%s/%s/%s", date.getDate(), date.getMonth() + 1, date.getYear());
+        String dateString = DateFormat.format("dd/MM/yy", date).toString();
 
         tvDate.setText(dateString);
         tvMessage.setText(item.getMessage().isEmpty() ? "-" : item.getMessage());

@@ -16,6 +16,24 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilCurrentFunds"
+        style="@style/InputStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Funds In Category"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvTitle">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/tietCurrentFunds"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilFunds"
         style="@style/InputStyle"
         android:layout_width="match_parent"
@@ -23,7 +41,7 @@
         android:hint="Funds"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvTitle">
+        app:layout_constraintTop_toBottomOf="@+id/tilCurrentFunds">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/tietFunds"
@@ -64,7 +82,7 @@
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/tietMessage"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -72,8 +90,8 @@
         android:id="@+id/btnUse"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Use"
         android:layout_marginTop="10dp"
+        android:text="Use"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tilMessage" />

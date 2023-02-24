@@ -88,6 +88,10 @@ public class GlobalAppData {
         save(activity);
     }
 
+    public Category getCategoryByName(Activity activity, String name) {
+        return getCategories().stream().filter(cat -> cat.getName().equals(name)).findFirst().get();
+    }
+
     public void transfer(Activity activity, String from, String to, float funds) {
         this.user.transfer(from, to, funds);
         save(activity);
